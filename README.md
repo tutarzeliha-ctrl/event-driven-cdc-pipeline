@@ -1,46 +1,87 @@
-# Event-Driven Change Data Capture (CDC) Pipeline
+# 🚀 Event-Driven Real-Time CDC Pipeline (PostgreSQL, Debezium, Kafka, Python)
 
-A real-time, event-driven data pipeline built with Docker, PostgreSQL, Debezium, and Apache Kafka. This project captures row-level database changes (inserts, updates, deletes) instantly and streams them as events to Kafka topics.
+An end-to-end modern data pipeline project that captures all data modifications (`INSERT`, `UPDATE`, `DELETE`) in a relational database (`PostgreSQL`) in real-time and processes them as event streams over Apache Kafka using a **Change Data Capture (CDC)** architecture.
 
-## Architecture & Tech Stack
+## 🏗️ Architecture & Tech Stack
 
-* **Database**: PostgreSQL 15 (configured with logical replication and `wal_level=logical`)
-* **CDC Tool**: Debezium Connector 2.4.0.Final (`pgoutput` plugin)
-* **Messaging / Streaming**: Apache Kafka 7.4.0 & Apache Zookeeper 7.4.0
-* **Containerization**: Docker & Docker Compose
+* **Database**: PostgreSQL 15 (WAL - Write-Ahead Logging based CDC source)
+* **CDC Engine**: Debezium 2.4.0 (Kafka Connect based PostgreSQL connector)
+* **Message Broker**: Apache Kafka & Zookeeper
+* **Containerization**: Docker Compose
+* **Python Ecosystem**: 
+  * `psycopg2-binary` & `Faker` (Simulated live data generation and DB operations)
+  * `kafka-python` (Real-time Kafka topic consumer and event processor)
 
-```text
-[ PostgreSQL (Source DB) ] 
-       │ (WAL / Logical Replication)
-       ▼
-[ Debezium Connector ] 
-       │ (JSON CDC Events)
-       ▼
-[ Apache Kafka Broker ] ──> [ Kafka Topics (postgres_cedb.public.customers) ]
-Prerequisites
-Docker and Docker Compose installed on your machine.
+---
 
-PowerShell or any terminal supporting Docker CLI.
+## ⚙️ System Workflow
 
-Quick Start / Installation
-1. Clone the repository
-Bash
-git clone https://github.com/tutarzeliha-ctrl/event-driven-cdc-pipeline.git
+1. **Producer (`producer.py`)**: Continuously generates random customer data (`INSERT`) into the `customers` table within PostgreSQL using the `Faker` library.
+2. **Debezium Connector**: Monitors PostgreSQL transaction logs (`WAL`) to instantly detect any database modifications (`INSERT`, `UPDATE`, `DELETE`).
+3. **Apache Kafka**: Securely and sequentially streams these captured event payloads to the designated Kafka topic (`postgres_cedb.public.customers`).
+4. **Consumer (`consumer.py`)**: Subscribes to the Kafka topic to consume and log events in real-time.
+
+---
+
+## 🛠️ Setup & Execution Guide
+
+Follow these steps to set up and run the project locally on your machine:
+
+### 1. Clone the Repository
+```bash
+git clone [https://github.com/your-username/event-driven-cdc-pipeline.git](https://github.com/your-username/event-driven-cdc-pipeline.git)
 cd event-driven-cdc-pipeline
-2. Start the infrastructure
+2. Spin Up the Docker Infrastructure
 Bash
-docker compose up -d
-3. Create the test table and enable replication
+docker-compose up -d
+3. Create a Python Virtual Environment & Install Dependencies
 Bash
-docker exec -it cdc_postgres psql -U postgres -d cedb -c "CREATE TABLE customers (id SERIAL PRIMARY KEY, first_name VARCHAR(50), last_name VARCHAR(50), email VARCHAR(100), created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP);"
-docker exec -it cdc_postgres psql -U postgres -d cedb -c "ALTER TABLE customers REPLICA IDENTITY FULL;"
-4. Register the Debezium Connector
-PowerShell
-curl.exe -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ -d "@connector-config.json"
-Testing the Pipeline
-Insert test data into PostgreSQL
+python -m venv .venv
+# For Windows:
+.venv\Scripts\Activate.ps1
+# For Mac/Linux:
+# source .venv/bin/activate
+
+pip install -r requirements.txt
+4. Create the PostgreSQL Table
+Connect to the PostgreSQL container and create the customers table:
+
 Bash
-docker exec -it cdc_postgres psql -U postgres -d cedb -c "INSERT INTO customers (first_name, last_name, email) VALUES ('Zeliha', 'Tutar', 'zeliha@example.com');"
-Consume events from Kafka
+docker exec -it cdc_postgres psql -U postgres -d cedb
+SQL
+CREATE TABLE IF NOT EXISTS customers (
+    id SERIAL PRIMARY KEY,
+    first_name VARCHAR(50),
+    last_name VARCHAR(50),
+    email VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+(Type \q to exit)
+
+5. Register the Debezium Connector
+POST the configuration payload to register the connector and start monitoring the database:
+
 Bash
-docker exec -it cdc_kafka kafka-console-consumer --bootstrap-server localhost:9092 --topic postgres_cedb.public.customers --from-beginning --property print.key=true
+curl.exe -i -X POST -H "Accept:application/json" -H "Content-Type:application/json" http://localhost:8083/connectors/ --data "@connector-config.json"
+6. Run the Pipeline
+Start the Data Producer (producer.py):
+
+Bash
+python producer.py
+Start the Kafka Consumer (consumer.py) in a Separate Terminal:
+
+Bash
+python consumer.py
+🧪 CDC Test Scenarios
+To test the UPDATE and DELETE event-driven capabilities of the pipeline, connect to the PostgreSQL database and run manual operations:
+
+Bash
+docker exec -it cdc_postgres psql -U postgres -d cedb
+Update Test:
+
+SQL
+UPDATE customers SET first_name = 'Zeliha_Test' WHERE id = 2011;
+Deletion Test:
+
+SQL
+DELETE FROM customers WHERE id = 3040;
