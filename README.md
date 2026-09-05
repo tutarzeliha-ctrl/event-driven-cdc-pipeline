@@ -16,6 +16,7 @@ A real-time data streaming and Change Data Capture (CDC) monitoring pipeline bui
 
 1. **Start Infrastructure**:
    ```bash
+   
    docker-compose up -d
 Initialize Database Table:
 
