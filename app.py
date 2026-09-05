@@ -10,15 +10,10 @@ if "events" not in st.session_state:
     st.session_state.last_id = 0
 
 # Direct PostgreSQL connection
+# Direct PostgreSQL connection via Streamlit Secrets
 db_connected = False
 try:
-    conn = psycopg2.connect(
-        dbname="cedb",
-        user="postgres",
-        password="postgres",
-        host="localhost",
-        port="5432"
-    )
+    conn = psycopg2.connect(st.secrets["url"])
     conn.autocommit = True
     cursor = conn.cursor()
     db_connected = True
