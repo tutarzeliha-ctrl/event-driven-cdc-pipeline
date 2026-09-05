@@ -1,5 +1,7 @@
 # Real-Time Event-Driven CDC Dashboard
 
+[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://event-driven-cdc-pipeline-l9eruccmhgzpvsl5fnabh4.streamlit.app/)
+
 A real-time data streaming and Change Data Capture (CDC) monitoring pipeline built with PostgreSQL, Kafka, Debezium, and Streamlit.
 
 ## Architecture & Tech Stack
