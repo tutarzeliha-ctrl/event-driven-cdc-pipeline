@@ -17,8 +17,9 @@ try:
     conn.autocommit = True
     cursor = conn.cursor()
     db_connected = True
-except Exception:
+except Exception as e:
     db_connected = False
+    st.error(f"DB Connection Error: {e}")
 
 # Fetch new records FIRST so metrics and feed sync instantly
 if db_connected:
